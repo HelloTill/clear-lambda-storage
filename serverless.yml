@@ -8,8 +8,7 @@ provider:
   iamRoleStatements:
     - Effect: "Allow"
       Action:
-        - lambda:ListFunctions
-        - lambda:ListVersionsByFunction
+        - lambda:List*
         - lambda:DeleteFunction
       Resource: "*"
 

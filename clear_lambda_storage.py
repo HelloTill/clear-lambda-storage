@@ -2,15 +2,18 @@
 Removes old versions of Lambda functions.
 """
 from __future__ import print_function
+
 import argparse
+
 import boto3
+
 try:
     import queue
 except ImportError:
     import Queue as queue
+
 from boto3.session import Session
 from botocore.exceptions import ClientError
-
 
 LATEST = '$LATEST'
 
@@ -47,6 +50,30 @@ def init_boto_client(client_name, region, args):
 
     return boto_client
 
+def lambda_aliased_versions(lambda_client, lambda_function):
+    """
+    Enumerates all aliased versions for a lambda
+    :param lambda_client: Client
+    :param lambda_function: Lambda dict
+    :return: list of aliases
+    """
+    next_marker = None
+    aliased_versions = ()
+
+    while True:
+        marker = { 'Marker': next_marker } if next_marker else {}
+        response = lambda_client.list_aliases(
+            FunctionName=lambda_function['FunctionName'],
+            **marker
+        )
+        for alias in response['Aliases']:
+            aliased_versions += (alias['FunctionVersion'],)
+        if 'NextMarker' in response:
+            next_marker = response['NextMarker']
+        else:
+            break;
+
+    return aliased_versions
 
 def lambda_function_generator(lambda_client):
     """
@@ -130,10 +157,12 @@ def remove_old_lambda_versions(args):
                 continue
 
             versions_to_keep = queue.Queue(maxsize=num_to_keep)
+            aliased_versions = lambda_aliased_versions(lambda_client, lambda_function)
+            latest_or_aliases = (lambda_function['Version'], '$LATEST') + aliased_versions
 
             for version in lambda_version_generator(lambda_client, lambda_function):
 
-                if version['Version'] in (lambda_function['Version'], '$LATEST'):
+                if version['Version'] in latest_or_aliases:
                     continue
 
                 if versions_to_keep.full():
