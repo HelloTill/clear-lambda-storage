@@ -24,7 +24,7 @@ package:
     - README.srt
 
 functions:
-  clear_lambda_storage:
+  clearLambdaStorage:
     handler: handler.clear_lambda_storage
     memorySize: 512
     timeout: 900
@@ -34,3 +34,25 @@ functions:
           method: scheduler
           rate: cron(0 3 * * ? *)
           timezone: America/New_York
+
+resources:
+  Resources:
+    ClearLambdaStorageAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmDescription: !Sub 'Alarms when the ${AWS::StackName} clear_lambda_storage Lambda errors'
+        AlarmName: !Sub '${AWS::StackName}-clear-lambda-storage-alarm'
+        AlarmActions:
+          - !ImportValue hellotill-platform-alarms-production:IntegrationsLowPriorityAlarmTopicArn
+        Namespace: AWS/Lambda
+        ComparisonOperator: GreaterThanThreshold
+        DatapointsToAlarm: 1
+        EvaluationPeriods: 1
+        Period: 60
+        Statistic: Sum
+        Threshold: 0
+        TreatMissingData: notBreaching
+        MetricName: Errors
+        Dimensions:
+          - Name: FunctionName
+            Value: !Ref ClearLambdaStorageLambdaFunction
