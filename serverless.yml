@@ -27,4 +27,8 @@ functions:
     memorySize: 512
     timeout: 900
     events:
-      - schedule: cron(0 12 ? * SUN *) # Run every sunday at 12:00pm UTC
+      ## Schedule: Every day at 03:00 Eastern
+      - schedule:
+          method: scheduler
+          rate: cron(0 3 * * ? *)
+          timezone: America/New_York
