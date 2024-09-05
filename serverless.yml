@@ -28,4 +28,30 @@ functions:
     memorySize: 128
     timeout: 120
     events:
-      - schedule: cron(0 12 ? * SUN *) # Run every sunday at 12:00pm UTC
+      ## Schedule: Every other hour
+      - schedule:
+          method: scheduler
+          rate: cron(0 */2 * * ? *)
+          timezone: America/New_York
+
+resources:
+  Resources:
+    ClearLambdaStorageAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmDescription: !Sub 'Alarms when the ${AWS::StackName} clear_lambda_storage Lambda errors'
+        AlarmName: !Sub '${AWS::StackName}-clear-lambda-storage-alarm'
+        AlarmActions:
+          - !ImportValue hellotill-platform-alarms-production:IntegrationsLowPriorityAlarmTopicArn
+        Namespace: AWS/Lambda
+        ComparisonOperator: GreaterThanThreshold
+        DatapointsToAlarm: 1
+        EvaluationPeriods: 1
+        Period: 60
+        Statistic: Sum
+        Threshold: 0
+        TreatMissingData: notBreaching
+        MetricName: Errors
+        Dimensions:
+          - Name: FunctionName
+            Value: !Ref ClearLambdaStorageLambdaFunction
