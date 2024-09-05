@@ -29,10 +29,10 @@ functions:
     memorySize: 512
     timeout: 900
     events:
-      ## Schedule: Every day at 03:00 Eastern
+      ## Schedule: Every other hour
       - schedule:
           method: scheduler
-          rate: cron(0 3 * * ? *)
+          rate: cron(0 */2 * * ? *)
           timezone: America/New_York
 
 resources:
